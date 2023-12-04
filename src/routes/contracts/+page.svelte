@@ -6,34 +6,63 @@
 	import type { QuerySnapshot, QueryDocumentSnapshot } from 'firebase/firestore';
 	import { collection, Query, onSnapshot, getDocs } from 'firebase/firestore';
 	import { db } from '$lib/firebase';
+	import { ref, get } from "firebase/database";
+
 	import { browser } from '$app/environment';
 	let showAdditionForm = false;
 
 	let items: Contract[] = [];
-	async function getDB() {
-		const collectionRef: Query<any> = collection(db, 'items');
-		if (browser) {
-			onSnapshot(collectionRef, (collectionSnap) => {
-				items = collectionSnap.docs.map((doc) =>
-					Object.assign(doc.data(), { id: doc.id })
-				) as Contract[];
-			});
-			console.log(items);
-		} else {
-			const collectionSnap: QuerySnapshot<Contract> = await getDocs(collectionRef);
-			items = collectionSnap.docs.map((doc: QueryDocumentSnapshot<Contract>) =>
-				Object.assign(doc.data(), { id: doc.id })
-			);
-			console.log(items);
-		}
+	function getDB() {
+		// const collectionRef: Query<any> = 
+		// if (browser) {
+		// 	onSnapshot(collectionRef, (collectionSnap) => {
+		// 		items = collectionSnap.docs.map((doc) =>
+		// 			Object.assign(doc.data(), { id: doc.id })
+		// 		) as Contract[];
+		// 	});
+		// 	console.log(items);
+		// } else {
+		// 	const collectionSnap: QuerySnapshot<Contract> = await getDocs(collectionRef);
+		// 	items = collectionSnap.docs.map((doc: QueryDocumentSnapshot<Contract>) =>
+		// 		Object.assign(doc.data(), { id: doc.id })
+		// 	);
+		// 	console.log(items);
+		// }
+		
+
+		// Querying real-time database
+		
+		const dbRef = ref(db, 'contracts');
+
+		get(dbRef).then((snapshot) => {
+			if (snapshot.exists()) {
+				for (const [key, value] of Object.entries(snapshot.val())) {
+					items.push({
+						id: key,
+						...value
+					})
+				}
+				items = [...items]
+			} else {
+				console.log('No data available');
+			}
+
+		}).catch((error) => {
+			console.error(error);
+		});
+
 	}
 	getDB();
 
 	let showCurrentUserItems = false;
 
-	$: filteredItems = showCurrentUserItems
-		? items.filter((item) => item.ownerId === currentUserId)
-		: items;
+	// $: filteredItems = showCurrentUserItems
+	// 	? items.filter((item) => item.ownerId === currentUserId)
+	// 	: items;
+	let accountId : string | null = "";
+	if (browser) {
+		accountId = localStorage.getItem('accountId');
+	}
 </script>
 
 <svelte:head>
@@ -43,7 +72,7 @@
 
 <div class="wrap">
 	<h1>Contracts</h1>
-
+	<h4 style="text-align: center;">Account: {accountId}</h4>
 	<div class="contactField">
 		<input
 			type="checkbox"
@@ -55,13 +84,13 @@
 		<label for="mine">Show only my contacts</label>
 	</div>
 	<div class="cards_grid">
-		{#if showCurrentUserItems}
-			<!-- TODO: paste here current users lists -->
-			<div>Current users</div>
-		{/if}
 		{#if items}
 			{#each items as item}
-				<ItemCard {item} />
+				{#if showCurrentUserItems && item.owner === accountId}
+					<ItemCard {item} />
+				{:else if !showCurrentUserItems}
+					<ItemCard {item} />
+				{/if}
 			{/each}
 		{/if}
 	</div>

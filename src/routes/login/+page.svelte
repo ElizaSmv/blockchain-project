@@ -1,23 +1,41 @@
 <script>
 	import { auth } from '$lib/firebase';
 	import { signInWithEmailAndPassword } from 'firebase/auth';
+	import { backendUrl } from '$lib/backend'
 	import logo from '$lib/images/logo-2.svg';
-
+	import { goto } from '$app/navigation';
 	let loading = false;
-	let email, password;
+	let email, password, accountId;
 	let message = { success: null, display: '' };
 	export let isLogged;
 
 	const handleLogin = async () => {
-		signInWithEmailAndPassword(auth, email, password);
-		auth.onAuthStateChanged((auth) => {
-			if (auth) {
+		// signInWithEmailAndPassword(auth, email, password);
+		// auth.onAuthStateChanged((auth) => {
+		// 	if (auth) {
+		// 		isLogged = true;
+		// 		console.log('logged in');
+		// 	} else {
+		// 		isLogged = false;
+		// 		console.log('not logged in');
+		// 	}
+		// });
+		fetch(backendUrl + '/Account?' + new URLSearchParams({
+			login: email,
+			password: password,
+		})).then((response) => {
+			if (response.ok) {
+				message = { success: true, display: 'Successfully logged in!' };
 				isLogged = true;
-				console.log('logged in');
+				goto('/contracts');
+
 			} else {
+				message = { success: false, display: 'Wrong email or password!' };
 				isLogged = false;
-				console.log('not logged in');
 			}
+			accountId = response.text().then((text) => {
+				localStorage.setItem('accountId', text);
+			});
 		});
 	};
 </script>
@@ -48,7 +66,7 @@
 					id="password"
 					class="form-control"
 					type="password"
-					placeholder="Set your new password"
+					placeholder="Your password"
 					bind:value={password}
 				/>
 			</div>
@@ -61,11 +79,11 @@
 				>
 			</div>
 			{#if message.success != null}
-				<div class="alert {message.success ? 'alert-success' : 'alert-danger'}" role="alert">
+				<a class="link" role="alert" href="/contracts">
 					{message.display}
-				</div>
+				</a>
 			{/if}
-			<a href="/" class="link">Create an account</a>
+			<!-- <a href="/" class="link">Create an account</a> -->
 		</div>
 	</form>
 </div>

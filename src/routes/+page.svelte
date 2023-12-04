@@ -1,5 +1,5 @@
 <script>
-	const user = true;
+	// const user = true;
 </script>
 
 <svelte:head>
@@ -13,11 +13,11 @@
 			<h2>C&L - Time locked NFT</h2>
 			Application for creating your time locked NFT
 		</div>
-		{#if user === true}
+		<!-- {#if user === true}
 			<a href="/contracts" class="button">Get Started</a>
-		{:else}
-			<a href="/login" class="button">Get Started</a>
-		{/if}
+		{:else} -->
+		<a href="/login" class="button">Get Started</a>
+		<!-- {/if} -->
 	</div>
 </div>
 

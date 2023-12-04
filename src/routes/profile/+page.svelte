@@ -1,5 +1,13 @@
-<script>
+<script lang="ts">
     import profile from '$lib/images/profile-pic.png';
+    import { browser } from '$app/environment';
+
+    let accountId : string | null = "";
+    if (browser) {
+        accountId = localStorage.getItem('accountId');
+    }
+    
+
 </script>
 
 <svelte:head>
@@ -11,8 +19,7 @@
         <div class="top-container">
             <img src={profile} class="profile-image" width="100" alt="profile-picture">
             <div>
-                <h4 class="name">Sponge Bob</h4>
-                <p class="mail">test@test.com</p>
+                Account ID: <span class="name">{accountId}</span>
             </div>
         </div>
 
@@ -24,6 +31,7 @@
 <style>
     .top-container{
         display: flex;
+        flex-direction: column;
         align-items: center;
         gap: 1vh;
         margin-bottom: 2vh;

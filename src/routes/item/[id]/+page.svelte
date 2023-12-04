@@ -1,14 +1,8 @@
 <script lang="ts">
 	import type { Contract } from '../../contract';
 	import cross from '$lib/images/cross.svg';
-	import {
-		doc,
-		getDoc,
-		DocumentReference,
-		QueryDocumentSnapshot,
-		DocumentSnapshot,
-		updateDoc
-	} from 'firebase/firestore';
+	import { ref, get } from "firebase/database";
+
 	import { db } from '$lib/firebase';
 	import { onMount } from 'svelte';
 	let param_id = 'loading';
@@ -19,15 +13,21 @@
 		getItem(param_id);
 	});
 
-	let item: Contract = { name: '', price: 0, time: '', imageUrl: '', description: '' };
+	let item: Contract = { name: '', price: 0, imageLink: '', id: '', owner: ''};
 	async function getItem(id: string) {
-		const docRef: DocumentReference<any> = doc(db, 'items', id);
-		console.log(docRef);
-		const docSnap: DocumentSnapshot<Contract> = await getDoc(docRef);
-		console.log(2);
-		item = docSnap.data()!;
-		// item.amount = parseInt(item.amount.toString(), 10);
-		console.log(item);
+		const dbRef = ref(db, 'contracts/' + id);
+		get(dbRef).then((snapshot) => {
+			if (snapshot.exists()) {
+				item = {
+					id: id,
+					...snapshot.val()
+				}
+			} else {
+				console.log('No data available');
+			}
+		}).catch((error) => {
+			console.error(error);
+		});
 	}
 
 	// async function saveItem() {
@@ -42,17 +42,6 @@
 	// 	}
 	// }
 
-	function decrement() {
-		if (item.amount > 0) {
-			item.amount -= 1;
-		}
-		saveItem();
-	}
-
-	function increment() {
-		item.amount += 1;
-		saveItem();
-	}
 </script>
 
 <svelte:head>
@@ -67,21 +56,20 @@
 		<h1 class="item_title">{item.name}</h1>
 		<hr />
 		<div class="description_box">
-			<p>Contract description:</p>
+			<!-- <p>Contract description:</p>
 			{#if item.description === undefined}
 				<p class="item_description">No description</p>
 			{:else}
 				<p class="item_description">{item.description}</p>
-			{/if}
+			{/if} -->
 		</div>
 		<div class="info_box">
 			<p class="item_price">Price: {item.price}$</p>
-			<p class="item_vendor">Owner: {item.owner}</p>
 		</div>
 
 		<div class="item_amount">
 			<!--			<button on:click={decrement}>-</button>-->
-			<p>Image URL: {item.imageUrl}</p>
+			<img src={item.imageLink} alt="Item" />
 			<!--			<button on:click={increment}>+</button>-->
 		</div>
 	</div>
@@ -132,6 +120,7 @@
 		justify-content: space-between;
 		font-size: 1.2em;
 		vertical-align: middle;
+		width: 100%;
 	}
 
 	.item_price {

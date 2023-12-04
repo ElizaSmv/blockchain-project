@@ -5,6 +5,10 @@
 	import Footer from '../lib/components/Footer.svelte';
 	// import isLogged from './login/+page.svelte'
 	const isLogged = true;
+
+	// Exporting backendUrl to other components
+	// export { backendUrl };
+
 </script>
 
 <link

@@ -4,6 +4,11 @@
 	import type { Contract } from '../../routes/contract';
 	import { addDoc, collection, CollectionReference, DocumentReference } from 'firebase/firestore';
 	import { db } from '../firebase';
+	import { backendUrl } from '$lib/backend';
+	// local storage
+	import { browser } from '$app/environment';
+
+
 
 	interface Error {
 		name?: string;
@@ -26,33 +31,53 @@
 		initialValues: {} as Contract,
 		validate: (values) => {
 			let errs: Error = {};
-			const for_price = new RegExp('\\d{1,3}(?:[.,]\\d{3})*(?:[.,]\\d{2})');
+			const for_price = new RegExp('.*');
 			const for_time = new RegExp("[1-9]\d*|0");
 			if (values.name === undefined || values.name === '') {
 				errs['name'] = 'Name is required';
 			}
 			if (values.price === undefined || !for_price.test(values.price.toString())) {
-				errs['price'] = 'Invalid price: should be written as 00.00';
+				errs['price'] = 'Invalid price: should be written as 00';
 			}
-			if (values.imageUrl === undefined || values.imageUrl === '') {
+			if (values.imageLink === undefined || values.imageLink === '') {
 				errs['imageUrl'] = 'Image URL is required';
 			}
 			// if ((values.description === undefined) || values.description === "") {
 			// 	errs["description"] = "Description is required";
 			// }
-			if (values.time === undefined || !for_time.test(values.time.toString())) {
-				errs['time'] = 'Deadline is required';
-			}
+			// if (values.time === undefined || !for_time.test(values.time.toString())) {
+			// 	errs['time'] = 'Deadline is required';
+			// }
 			return errs;
 		},
 		onSubmit: (values) => {
-			console.log(typeof values.time);
-			console.log(values);
-			addToDB(values);
-			form.set({} as Contract);
-			alert('You added new contract.');
+			const body = {
+				// "name", "accountId", "imageLink", "price"
+				name: values.name,
+				accountId: localStorage.getItem('accountId'),
+				imageLink: values.imageLink,
+				price: values.price,
+			}
+			fetch(backendUrl + '/New', {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json',
+				},
+				body: JSON.stringify(body),
+			}).then((response) => {
+				if (response.ok) {
+					console.log('Contract added');
+				} else {
+					console.log('Contract not added');
+				}
+			});
 		}
 	});
+	let accountId: string | null = '';
+	if (browser) {
+		accountId = localStorage.getItem('accountId')
+	} 
+	// const accountId = localStorage.getItem('accountId')
 </script>
 
 <!-- svelte-ignore a11y-click-events-have-key-events -->
@@ -102,7 +127,7 @@
 						<small>{$errors.price}</small>
 					{/if}
 				</div>
-				<div class="form-item">
+				<!-- <div class="form-item">
 					<label class="label">Duration (seconds)</label>
 					<input
 						type="number"
@@ -114,21 +139,21 @@
 					{#if $errors.time}
 						<small>{$errors.time}</small>
 					{/if}
-				</div>
+				</div> -->
 				<div class="form-item">
 					<label class="label">Your image URL</label>
 					<input
 						type="text"
 						id="imageUrl"
 						placeholder="image Url"
-						bind:value={$form.imageUrl}
+						bind:value={$form.imageLink}
 						on:change={handleChange}
 					/>
-					{#if $errors.imageUrl}
-						<small>{$errors.imageUrl}</small>
+					{#if $errors.imageLink}
+						<small>{$errors.imageLink}</small>
 					{/if}
 				</div>
-				<div class="form-item">
+				<!-- <div class="form-item">
 					<label class="label">Description</label>
 					<textarea
 						id="description"
@@ -140,15 +165,14 @@
 					{#if $errors.description}
 						<small>{$errors.description}</small>
 					{/if}
-				</div>
+				</div> -->
 				<div class="form-item">
 					<label class="label">Owner </label>
 					<input
 						type="text"
 						id="owner"
-						value="test@test.com"
+						value={accountId}
 						on:change={handleChange}
-						readonly="readonly"
 					/>
 				</div>
 				<!--						bind:value={$form.owner} -->
@@ -161,7 +185,8 @@
 					class="form_button submit"
 					type="submit"
 					on:close={() => (showAdditionForm = false)}
-					on:reset={handleReset}>Send</button
+					on:reset={handleReset}
+					>Send</button
 				>
 			</div>
 		</form>

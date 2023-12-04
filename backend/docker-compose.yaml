@@ -1,0 +1,23 @@
+services:
+  blockchain:
+    build:
+      context: ./
+      dockerfile: Dockerfile.blockchain
+    ports:
+      - "0.0.0.0:7545:8545"
+    networks:
+      - blockchain
+  
+  server:
+    build:
+      context: ./
+      dockerfile: Dockerfile.backend
+    ports:
+      - "0.0.0.0:3000:3000"
+    networks:
+      - blockchain
+
+networks:
+  blockchain:
+    driver: bridge
+
